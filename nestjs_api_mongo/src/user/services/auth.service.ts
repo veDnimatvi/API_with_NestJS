@@ -18,6 +18,7 @@ export class AuthService {
       ...token,
     };
   }
+
   async login(loginDto: LoginDto) {
     const user = await this.userService.findByLogin(loginDto);
     const token = this._createToken(user);

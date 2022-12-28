@@ -48,7 +48,9 @@ export class UserService {
       };
     });
 
-    return result;
+    const total = await this.userRepository.countDocument();
+
+    return { data: result, total };
   }
 
   async deleteUserById(id: any) {

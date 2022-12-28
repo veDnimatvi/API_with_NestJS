@@ -16,4 +16,8 @@ export class UserRepository extends BaseRepository<User> {
   findUserByEmail(email: any) {
     return this.userModel.findOne(email);
   }
+
+  countDocument() {
+    return this.userModel.countDocuments();
+  }
 }
