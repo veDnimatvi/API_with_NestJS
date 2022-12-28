@@ -12,4 +12,8 @@ export class UserRepository extends BaseRepository<User> {
   ) {
     super(userModel);
   }
+
+  findUserByEmail(email: any) {
+    return this.userModel.findOne(email);
+  }
 }

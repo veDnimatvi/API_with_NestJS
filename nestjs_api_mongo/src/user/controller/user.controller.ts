@@ -6,22 +6,21 @@ import {
   Delete,
   Param,
   Put,
+  UseGuards,
 } from '@nestjs/common';
-import { UserService } from './user.service';
+import { AuthGuard } from '@nestjs/passport';
+import { UserService } from '../services/user.service';
 
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
+  @UseGuards(AuthGuard())
   @Get()
   getAllUser() {
     return this.userService.getAllUser();
   }
 
-  @Post()
-  createNew(@Body() body: any) {
-    return this.userService.createNew(body);
-  }
-
+  @UseGuards(AuthGuard())
   @Delete(':id') // http://localhost:3000/user/id
   async deleteUserById(@Param('id') id: any) {
     await this.userService.deleteUserById(id);
@@ -30,6 +29,7 @@ export class UserController {
     };
   }
 
+  @UseGuards(AuthGuard())
   @Put(':id')
   async updateUser(@Param('id') id: any, @Body() body: any) {
     await this.userService.updateUser(id, body);
