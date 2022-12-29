@@ -1,29 +1,35 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
-import { UserRepository } from '../user.repository';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto, LoginDto } from '../dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from '../schemas/user.schema';
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
 
   async create(userDto: CreateUserDto) {
     userDto.password = await bcrypt.hash(userDto.password, 10);
 
-    const userInDb = await this.userRepository.findUserByEmail({
-      email: userDto.email,
-    });
+    const userInDb = await this.userModel
+      .findOne({
+        email: userDto.email,
+      })
+      .exec();
 
     if (userInDb) {
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
 
-    return await this.userRepository.create(userDto);
+    return await this.userModel.create(userDto);
   }
 
   async findByLogin({ email, password }: LoginDto) {
-    const user = await this.userRepository.findUserByEmail({
-      email: email,
-    });
+    const user = await this.userModel
+      .findOne({
+        email: email,
+      })
+      .exec();
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
@@ -39,7 +45,7 @@ export class UserService {
   }
 
   async getAllUser() {
-    const result = (await this.userRepository.findAll()).map((item: any) => {
+    const result = (await this.userModel.find()).map((item: any) => {
       return {
         id: item?._id,
         name: item?.name,
@@ -48,16 +54,16 @@ export class UserService {
       };
     });
 
-    const total = await this.userRepository.countDocument();
+    const total = await this.userModel.countDocuments();
 
     return { data: result, total };
   }
 
   async deleteUserById(id: any) {
-    return await this.userRepository.deleteOne(id);
+    return await this.userModel.deleteOne(id);
   }
 
   async updateUser(id: any, body: any) {
-    return await this.userRepository.findByIdAndUpdate(id, body);
+    return await this.userModel.findByIdAndUpdate(id, body);
   }
 }
