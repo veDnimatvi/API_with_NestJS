@@ -8,20 +8,31 @@ import { User } from '../schemas/user.schema';
 export class UserService {
   constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
 
+  isValidEmail(email: string) {
+    if (email) {
+      const re =
+        /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(email);
+    } else return false;
+  }
+
   async create(userDto: CreateUserDto) {
-    userDto.password = await bcrypt.hash(userDto.password, 10);
+    if (this.isValidEmail(userDto.email) && userDto.password) {
+      const userInDb = await this.userModel
+        .findOne({
+          email: userDto.email,
+        })
+        .exec();
 
-    const userInDb = await this.userModel
-      .findOne({
-        email: userDto.email,
-      })
-      .exec();
-
-    if (userInDb) {
-      throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
+      if (!userInDb) {
+        userDto.password = await bcrypt.hash(userDto.password, 10);
+        return await this.userModel.create(userDto);
+      } else {
+        throw new HttpException('USER_ALREADY_EXISTS', HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      throw new HttpException('EMAIL_REGISTER_INVALID', HttpStatus.BAD_REQUEST);
     }
-
-    return await this.userModel.create(userDto);
   }
 
   async findByLogin({ email, password }: LoginDto) {
