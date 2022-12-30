@@ -180,6 +180,24 @@ export class AuthService {
     }
   }
 
+  async changePassword(body: LoginDto) {
+    const user = await this.userModel.findOne({ email: body.email });
+
+    if (user) {
+      user.password = await bcrypt.hash(body.password, 10);
+
+      user.save();
+
+      return {
+        updated: true,
+      };
+    } else {
+      return {
+        updated: false,
+      };
+    }
+  }
+
   private _createToken({ email }): any {
     const accessToken = this.jwtService.sign({ email });
     return {
