@@ -113,10 +113,8 @@ export class AuthService {
 
     if (sent) {
       const user = await this.userModel.findOne({ email: body.email }).exec();
-
       user.codeReset = generateNumber;
       user.save();
-
       return {
         send: true,
       };
@@ -154,7 +152,6 @@ export class AuthService {
     if (user) {
       user.valid = true;
       user.save();
-
       return {
         verify: true,
       };
@@ -185,9 +182,7 @@ export class AuthService {
 
     if (user) {
       user.password = await bcrypt.hash(body.password, 10);
-
       user.save();
-
       return {
         updated: true,
       };
