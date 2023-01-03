@@ -9,6 +9,8 @@ import { ROLE } from 'src/utils/role';
 export class UserService {
   constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
 
+  limit = 10;
+
   isValidEmail(email: string) {
     if (email) {
       const re =
@@ -67,30 +69,25 @@ export class UserService {
   }
 
   async getAllUser(page: number) {
-    const result = (await this.userModel.find()).map((item: any) => {
-      return {
-        id: item?._id,
-        name: item?.name,
-        email: item?.email,
-        number: item?.number,
-      };
-    });
-
-    const total = await this.userModel.countDocuments();
-    if (page) {
-      return {
-        data: result.slice((page - 1) * 10, page * 10),
-        page: Number(page),
-        limit: 10,
-        total,
-      };
+    if (page < 1) {
+      throw new HttpException('PAGE_NOT_FOUND', HttpStatus.BAD_REQUEST);
     } else {
-      return {
-        data: result.slice(0, 10),
-        page: Number(page),
-        limit: 10,
-        total,
-      };
+      const result = (
+        await this.userModel
+          .find()
+          .limit(this.limit)
+          .skip(this.limit * (page - 1))
+      ).map((item: any) => {
+        return {
+          id: item?._id,
+          name: item?.name,
+          email: item?.email,
+          number: item?.number,
+        };
+      });
+
+      const total = await this.userModel.countDocuments();
+      return { data: result, page: Number(page), limit: this.limit, total };
     }
   }
 
