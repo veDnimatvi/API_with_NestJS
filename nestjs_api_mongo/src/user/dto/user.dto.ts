@@ -7,6 +7,7 @@ export class CreateUserDto {
   valid: boolean;
   number: string;
   codeReset: number | null;
+  @IsNotEmpty() role: string;
 }
 
 export class LoginDto {

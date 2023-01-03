@@ -4,6 +4,7 @@ import { CreateUserDto, LoginDto } from '../dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../schemas/user.schema';
+import { ROLE } from 'src/utils/role';
 @Injectable()
 export class UserService {
   constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
@@ -17,21 +18,31 @@ export class UserService {
   }
 
   async create(userDto: CreateUserDto) {
-    if (this.isValidEmail(userDto.email) && userDto.password) {
-      const userInDb = await this.userModel
-        .findOne({
-          email: userDto.email,
-        })
-        .exec();
-
-      if (!userInDb) {
-        userDto.password = await bcrypt.hash(userDto.password, 10);
-        return await this.userModel.create(userDto);
-      } else {
-        throw new HttpException('USER_ALREADY_EXISTS', HttpStatus.BAD_REQUEST);
-      }
+    if (!ROLE.includes(userDto.role)) {
+      throw new HttpException('ROLE_INVALID', HttpStatus.BAD_REQUEST);
     } else {
-      throw new HttpException('EMAIL_REGISTER_INVALID', HttpStatus.BAD_REQUEST);
+      if (this.isValidEmail(userDto.email) && userDto.password) {
+        const userInDb = await this.userModel
+          .findOne({
+            email: userDto.email,
+          })
+          .exec();
+
+        if (!userInDb) {
+          userDto.password = await bcrypt.hash(userDto.password, 10);
+          return await this.userModel.create(userDto);
+        } else {
+          throw new HttpException(
+            'USER_ALREADY_EXISTS',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      } else {
+        throw new HttpException(
+          'EMAIL_REGISTER_INVALID',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
   }
 
@@ -55,7 +66,7 @@ export class UserService {
     return user;
   }
 
-  async getAllUser() {
+  async getAllUser(page: number) {
     const result = (await this.userModel.find()).map((item: any) => {
       return {
         id: item?._id,
@@ -66,8 +77,21 @@ export class UserService {
     });
 
     const total = await this.userModel.countDocuments();
-
-    return { data: result, total };
+    if (page) {
+      return {
+        data: result.slice((page - 1) * 10, page * 10),
+        page: Number(page),
+        limit: 10,
+        total,
+      };
+    } else {
+      return {
+        data: result.slice(0, 10),
+        page: Number(page),
+        limit: 10,
+        total,
+      };
+    }
   }
 
   async deleteUserById(id: any) {

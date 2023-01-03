@@ -8,6 +8,7 @@ const UserSchema = new Schema(
     password: String,
     valid: Boolean,
     codeReset: Number,
+    role: String,
   },
   {
     collection: 'users',
@@ -22,4 +23,5 @@ export interface User extends Document {
   password: string;
   valid: boolean;
   codeReset: number;
+  role: string;
 }

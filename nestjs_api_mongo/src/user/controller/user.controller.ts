@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserService } from '../services/user.service';
@@ -15,8 +16,8 @@ export class UserController {
   constructor(private userService: UserService) {}
   @UseGuards(AuthGuard())
   @Get()
-  getAllUser() {
-    return this.userService.getAllUser();
+  getAllUser(@Query('page') page: number) {
+    return this.userService.getAllUser(page);
   }
 
   @UseGuards(AuthGuard())
